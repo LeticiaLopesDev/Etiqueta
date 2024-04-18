@@ -1,0 +1,38 @@
+﻿@model Etiqueta.ViewModel.Config<TModel>
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>Etiqueta</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        @@page{
+            size: @(Model.Width + "mm") @(Model.Height + "mm");
+            margin-top: @(Model.MarginTop + "mm");
+            margin-left: @(Model.MarginLeft + "mm");
+            margin-right: @(Model.MarginRight + "mm");
+            margin-bottom: @(Model.MarginBottom + "mm");            
+        }
+    </style>
+</head>
+<body>
+<div style="display: grid; grid-template-columns: repeat(@Model.Columns, @(Model.Tag.Width + "mm"));">
+   @foreach (var tag in Model.ListModel)
+   {
+       <div style="margin-left: @(Model.Tag.MarginLeft + "mm");height: @(Model.Tag.Height + "mm");">
+           @await Html.PartialAsync(Model.PartialName, tag)
+       </div>
+   }
+</div>
+</body>
+</html>
