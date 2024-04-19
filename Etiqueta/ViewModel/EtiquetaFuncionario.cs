@@ -1,6 +1,6 @@
 ﻿namespace Etiqueta.ViewModel;
 
-public class EtiquetaFuncionario
+public class EtiquetaFuncionario : IEtiqueta
 {
     public string CnpjEmpresa { get; set; }
     public string NomeEmpresa { get; set; }

@@ -1,9 +1,10 @@
-﻿@model Etiqueta.ViewModel.EtiquetaFuncionario
+﻿@using System.Globalization
+@model Etiqueta.ViewModel.EtiquetaFuncionario
 @{
-    var maxWidth = ViewBag.Width;
+    var maxWidth = ViewBag.Width.ToString(new CultureInfo("en-us"));
 }
 
-<div style="font-size: 10px;padding: 5px;">
+<div style="font-size: 10px;padding: 10px 5px;">
     <div class="txt-ellipse" style="max-width: @(maxWidth + "mm");display: flex; justify-content: space-between"><span>@Model.CnpjEmpresa</span> <span>@Model.Periodo</span></div>
     <div class="txt-ellipse" style="max-width: @(maxWidth + "mm");display: flex; justify-content: space-between"><span>@Model.NomeEmpresa</span></div>
     <div class="txt-ellipse" style="max-width: @(maxWidth + "mm");display: flex; justify-content: space-between"><span><b>Func: @Model.Codigo - @Model.Nome</b></span></div>

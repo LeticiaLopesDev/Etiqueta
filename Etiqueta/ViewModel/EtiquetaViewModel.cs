@@ -1,6 +1,6 @@
 ﻿namespace Etiqueta.ViewModel;
 
-public class Config<T>
+public class Config
 {
     public int Columns { get; set; }
     public decimal MarginTop { get; set; }
@@ -11,7 +11,7 @@ public class Config<T>
     public decimal MarginFooter { get; set; }
     public Tag Tag { get; set; }
     public string PartialName { get; set; }
-    public List<T> ListModel { get; set; }
+    public List<IEtiqueta> ListModel { get; set; }
     public decimal Height { get; set; }
     public decimal Width { get; set; }
 }

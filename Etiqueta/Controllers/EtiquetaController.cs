@@ -36,7 +36,7 @@ public class EtiquetaController : Controller
             
         }*/
 
-        var model = new Config<EtiquetaFuncionario>();
+        var model = new Config();
         model.Columns = 3;
         model.MarginTop = 12.7m;
         model.MarginLeft = 4.8m;
@@ -45,12 +45,12 @@ public class EtiquetaController : Controller
         model.Tag = new Tag()
         {
             Width = 66.7m,
-            Height = 24.4m,
+            Height = 25.1m,
             MarginLeft = 2.74m
         };
         model.Height = 279.4m;
         model.Width = 215.9m;
-        model.ListModel = funcionarios.ToList();
+        model.ListModel = funcionarios.ToList().Select(x=>(IEtiqueta)x).ToList();
         model.PartialName = "_Funcionario";
 
         return View("Impressao", model);

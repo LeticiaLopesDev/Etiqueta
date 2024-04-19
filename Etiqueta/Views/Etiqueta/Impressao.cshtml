@@ -1,6 +1,6 @@
 ﻿@using System.Globalization
 @using Etiqueta.ViewModel 
-@model Etiqueta.ViewModel.Config<EtiquetaFuncionario>
+@model Etiqueta.ViewModel.Config
 
 @{
     Layout = null;
@@ -31,7 +31,7 @@
             margin-left: @(Model.MarginLeft.ToString(new CultureInfo("en-us")) + "mm");
             margin-right: @(Model.MarginRight.ToString(new CultureInfo("en-us")) + "mm");
             margin-bottom: @(Model.MarginBottom.ToString(new CultureInfo("en-us")) + "mm");            
-        }
+        }          
     </style>
 </head>
 <body>
@@ -39,7 +39,7 @@
         display: grid; grid-template-columns: repeat(@Model.Columns, @(Model.Tag.Width.ToString(new CultureInfo("en-us")) + "mm")); column-gap: @(Model.Tag.MarginLeft.ToString(new CultureInfo("en-us")) + "mm");">
        @foreach (var tag in Model.ListModel)
        {
-           <div style="height: @(Model.Tag.Height + "mm");">
+           <div style="height: @(Model.Tag.Height.ToString(new CultureInfo("en-us")) + "mm");">
                @await Html.PartialAsync(Model.PartialName, tag)
            </div>
        }
