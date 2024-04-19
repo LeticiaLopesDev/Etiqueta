@@ -45,8 +45,8 @@ public class EtiquetaController : Controller
         model.Tag = new Tag()
         {
             Width = 66.7m,
-            Height = 25.1m,
-            MarginLeft = 2.74m
+            Height = 25.4m,
+            MarginLeft = 3.2m
         };
         model.Height = 279.4m;
         model.Width = 215.9m;

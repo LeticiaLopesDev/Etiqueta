@@ -4,7 +4,7 @@
 
 @{
     Layout = null;
-    ViewBag.Width = Model.Tag.Width.ToString(new CultureInfo("en-us"));
+    ViewBag.Width = Model.Tag.Width;
 }
 
 <!DOCTYPE html>
@@ -35,11 +35,11 @@
     </style>
 </head>
 <body>
-    <div style="min-height: @(Model.Tag.Height.ToString(new CultureInfo("en-us")) + "mm")); max-height: @(Model.Tag.Height.ToString(new CultureInfo("en-us")) + "mm")); 
+    <div style="min-height: @(Model.Tag.Height.ToString(new CultureInfo("en-us")) + "mm"); max-height: @(Model.Tag.Height.ToString(new CultureInfo("en-us")) + "mm"); 
         display: grid; grid-template-columns: repeat(@Model.Columns, @(Model.Tag.Width.ToString(new CultureInfo("en-us")) + "mm")); column-gap: @(Model.Tag.MarginLeft.ToString(new CultureInfo("en-us")) + "mm");">
        @foreach (var tag in Model.ListModel)
        {
-           <div style="height: @(Model.Tag.Height.ToString(new CultureInfo("en-us")) + "mm");">
+           <div style="height: @(Model.Tag.Height.ToString(new CultureInfo("en-us")) + "mm");display: flex;align-items: center;">
                @await Html.PartialAsync(Model.PartialName, tag)
            </div>
        }
