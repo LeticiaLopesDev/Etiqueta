@@ -1,9 +1,18 @@
-﻿using Etiqueta.ViewModel;
+﻿using CsvHelper;
+using Etiqueta.ViewModel;
 using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
 
 namespace Etiqueta.Controllers;
 public class EtiquetaController : Controller
 {
+    private readonly ICSVService _csvService;
+
+    public EtiquetaController(ICSVService csvService)
+    {
+        _csvService = csvService;
+    }
+
     public IActionResult Index()
     {
         return View();
@@ -16,9 +25,17 @@ public class EtiquetaController : Controller
     }
 
     [HttpPost]
-    public ActionResult ImprimirEtiquetaFuncionario(EtiquetaFuncionario form)
+    public ActionResult EtiquetaFuncionario(IFormFile formFile)
     {
-        
+        var funcionarios = _csvService.ReadCSV<EtiquetaFuncionario>(formFile.OpenReadStream());
+
+        /*using (var reader = new StreamReader(formFile.OpenReadStream()))
+        using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
+        {
+            var records = csv.GetRecords<dynamic>();
+            
+        }*/
+
         var model = new Config<EtiquetaFuncionario>();
         model.Columns = 3;
         model.MarginTop = 12.7m;
@@ -33,7 +50,10 @@ public class EtiquetaController : Controller
         };
         model.Height = 279.4m;
         model.Width = 215.9m;
-        
+        model.ListModel = funcionarios.ToList();
+        model.PartialName = "_Funcionario";
+
         return View("Impressao", model);
     }
+
 }

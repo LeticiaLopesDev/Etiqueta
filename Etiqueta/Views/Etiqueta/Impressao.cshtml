@@ -1,7 +1,10 @@
-﻿@model Etiqueta.ViewModel.Config<TModel>
+﻿@using System.Globalization
+@using Etiqueta.ViewModel 
+@model Etiqueta.ViewModel.Config<EtiquetaFuncionario>
 
 @{
     Layout = null;
+    ViewBag.Width = Model.Tag.Width.ToString(new CultureInfo("en-us"));
 }
 
 <!DOCTYPE html>
@@ -15,24 +18,31 @@
             padding: 0;
             box-sizing: border-box;
         }
+
+        .txt-ellipse {
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
         
         @@page{
-            size: @(Model.Width + "mm") @(Model.Height + "mm");
-            margin-top: @(Model.MarginTop + "mm");
-            margin-left: @(Model.MarginLeft + "mm");
-            margin-right: @(Model.MarginRight + "mm");
-            margin-bottom: @(Model.MarginBottom + "mm");            
+            size: @(Model.Width.ToString(new CultureInfo("en-us")) + "mm") @(Model.Height.ToString(new CultureInfo("en-us")) + "mm");
+            margin-top: @(Model.MarginTop.ToString(new CultureInfo("en-us")) + "mm");
+            margin-left: @(Model.MarginLeft.ToString(new CultureInfo("en-us")) + "mm");
+            margin-right: @(Model.MarginRight.ToString(new CultureInfo("en-us")) + "mm");
+            margin-bottom: @(Model.MarginBottom.ToString(new CultureInfo("en-us")) + "mm");            
         }
     </style>
 </head>
 <body>
-<div style="display: grid; grid-template-columns: repeat(@Model.Columns, @(Model.Tag.Width + "mm"));">
-   @foreach (var tag in Model.ListModel)
-   {
-       <div style="margin-left: @(Model.Tag.MarginLeft + "mm");height: @(Model.Tag.Height + "mm");">
-           @await Html.PartialAsync(Model.PartialName, tag)
-       </div>
-   }
-</div>
+    <div style="min-height: @(Model.Tag.Height.ToString(new CultureInfo("en-us")) + "mm")); max-height: @(Model.Tag.Height.ToString(new CultureInfo("en-us")) + "mm")); 
+        display: grid; grid-template-columns: repeat(@Model.Columns, @(Model.Tag.Width.ToString(new CultureInfo("en-us")) + "mm")); column-gap: @(Model.Tag.MarginLeft.ToString(new CultureInfo("en-us")) + "mm");">
+       @foreach (var tag in Model.ListModel)
+       {
+           <div style="height: @(Model.Tag.Height + "mm");">
+               @await Html.PartialAsync(Model.PartialName, tag)
+           </div>
+       }
+    </div>
 </body>
 </html>

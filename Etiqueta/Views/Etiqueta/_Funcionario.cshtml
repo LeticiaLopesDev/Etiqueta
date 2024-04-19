@@ -1,0 +1,13 @@
+﻿@model Etiqueta.ViewModel.EtiquetaFuncionario
+@{
+    var maxWidth = ViewBag.Width;
+}
+
+<div style="font-size: 10px;padding: 5px;">
+    <div class="txt-ellipse" style="max-width: @(maxWidth + "mm");display: flex; justify-content: space-between"><span>@Model.CnpjEmpresa</span> <span>@Model.Periodo</span></div>
+    <div class="txt-ellipse" style="max-width: @(maxWidth + "mm");display: flex; justify-content: space-between"><span>@Model.NomeEmpresa</span></div>
+    <div class="txt-ellipse" style="max-width: @(maxWidth + "mm");display: flex; justify-content: space-between"><span><b>Func: @Model.Codigo - @Model.Nome</b></span></div>
+    <div class="txt-ellipse" style="max-width: @(maxWidth + "mm");display: flex; justify-content: space-between"><span>CTPS: @Model.CTPS</span><span>PIS: @Model.PIS</span></div>
+    <div class="txt-ellipse" style="max-width: @(maxWidth + "mm");display: flex; justify-content: space-between"><span>CBO: @Model.CBOCodigo</span><span>REG: @Model.Reg</span><span>CHAPA: @Model.Chapa</span></div>
+    <div class="txt-ellipse" style="max-width: @(maxWidth + "mm");display: flex; justify-content: space-between"><p><b>@Html.Raw(@Model.Horario)</b></p></div>
+</div>
