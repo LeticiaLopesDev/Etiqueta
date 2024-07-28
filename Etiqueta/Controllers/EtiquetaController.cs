@@ -25,7 +25,7 @@ public class EtiquetaController : Controller
     }
 
     [HttpPost]
-    public ActionResult EtiquetaFuncionario(IFormFile formFile)
+    public ActionResult EtiquetaFuncionario(IFormFile formFile, string periodo)
     {
         var funcionarios = _csvService.ReadCSV<EtiquetaFuncionario>(formFile.OpenReadStream());
 
@@ -52,6 +52,7 @@ public class EtiquetaController : Controller
         model.Width = 215.9m;
         model.ListModel = funcionarios.ToList().Select(x=>(IEtiqueta)x).ToList();
         model.PartialName = "_Funcionario";
+        ViewBag.Periodo = "08/2024";
 
         return View("Impressao", model);
     }
