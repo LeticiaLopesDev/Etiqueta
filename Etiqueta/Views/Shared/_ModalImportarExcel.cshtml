@@ -1,0 +1,512 @@
+﻿@model GestorDCSystem.ViewModel.Importacao
+@inject Microsoft.AspNetCore.Hosting.IWebHostEnvironment hostEnvironment
+
+@{
+    var area = ViewContext.RouteData.Values["area"]?.ToString();
+    var urlImg = hostEnvironment.WebRootPath + "/Imgs/icons/data-transfer.svg";
+}
+
+<div id="modal-importar" class="modal fade" role="dialog" tabindex="-1" data-keyboard="false" data-backdrop="static">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content" style="max-width: 60%">
+            <div class="modal-header hidden">
+                <button type="button" class="bootbox-close-button close" data-dismiss="modal" aria-hidden="true">×</button>
+                <h4 class="modal-title">@Model.Titulo</h4>
+            </div>
+
+            <div class="modal-body">
+                <div id="form-importacao"></div>
+                <div class="modal-preview-excel mg-t-15 hidden">
+                    <ul class="list-accordion" id="previw-container">
+                        <li class="item-list" style="padding: 0">
+                            <div class="item-accordion-title" style="flex-direction: row; ">
+                                <div class="flex-1 mg-l-10">
+                                    Pré-visualização da planilha Excel a importar
+                                    <div class="sub">Na pré-visualização é exibido apenas 25 registros</div>
+                                </div>
+                            </div>
+                            <div class="item-accordion-content" data-simplebar style="max-height: 300px" data-simplebar-auto-hide="false">
+                                <div id="preview-excel" class="preview-excel"></div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                <div class="row hidden" id="progress-content">
+                    <div class="col-md-12">
+                        <div class="modal-loading-img">
+                            <div class="arrow-copy"></div>
+                            <div class="check"></div>
+                            <!--<img src="~/Imgs/icons/data-transfer.svg" id="modal-icon" alt="Sincronizando" style="max-width: 128px" />-->
+                            @Html.Raw(File.ReadAllText(urlImg))
+                        </div>
+                        <div class="modal-loading-text">
+                            <div id="title-status" class="title-status"><b>Efetuando importação</b></div>
+                            <div id="sub-status" class="sub">Aguarde um instante, estamos importando os registros. <br><b> Isso pode demorar alguns minutos.</b> </div>
+
+                            <div class="loading-wrapper mg-t-15" id="progress-bar">
+                            </div>
+
+                            <div class="modal-list-container" style="padding: 0">
+                                <ul>
+                                    <li class="item-list" style="padding: 0" id="registro-importado">
+                                        <div class="item-accordion-title">
+                                            <div class="flex-1">
+                                                Registros Importados <span class="pull-right" id="qtd-importado">0</span>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </ul>
+                                <ul>
+                                    <li class="item-list" style="padding: 0" id="registro-importado">
+                                        <div class="item-accordion-title">
+                                            <div class="flex-1">
+                                                Registros Atualizados <span class="pull-right" id="qtd-atualizado">0</span>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </ul>
+                                <ul class="list-accordion" id="itens-container">
+                                    <li class="item-list" style="padding: 0">
+                                        <div class="item-accordion-title" style="flex-direction: row; ">
+                                            <div class="flex-1 mg-l-10">
+                                                Registros Não Importados <span class="pull-right" id="qtd-ocorrencia">0</span>
+                                            </div>
+                                        </div>
+                                        <div class="item-accordion-content">
+                                            <div class="row" data-simplebar style="max-height: 200px" data-simplebar-auto-hide="false">
+                                                <div class="col-md-12">
+                                                    <table class="table" id="table-ocorrencia">
+                                                        <thead class="">
+                                                            <tr>
+                                                                <th>Registro</th>
+                                                                <th>Detalhe da Ocorrência</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            <tr class="tr-default">
+                                                                <td colspan="2" style="text-align: center; padding: 20px 0">
+                                                                    <p class="" style="font-size: 16px; margin-bottom: 5px;">Não há nenhuma ocorrência</p>
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="sub pull-right"><b><span id="qtd-processado">0</span> de <span id="qtd-total"></span> Processados</b></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer hidden">
+                <div class="form-group">
+                    <input type="button" value="Cancelar" class="btn btn-default" id="btn-cancelar" data-dismiss="modal" />
+                    <input type="button" value="Importar (F9)" class="btn btn-primary" id="btn-importar-excel" data-key="f9" />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="~/js/acordion-ui.min.js" asp-append-version="true"></script>
+<script src="~/js/progressbar.js" asp-append-version="true"></script>
+<script>
+    const excel = new Worker('/js/worker/sheetjs-excel.js');
+    excel.onmessage = responseWebWorkerExcel;
+    var dadosArrayImporar = [];
+    var arrayOfArrays = [];
+    var progressBar = null;
+    var currentProgress = 0;
+    var qtdOcorrencia = 0;
+    var qtdSucesso = 0;
+    var qtdAtualizado = 0;
+    var loadTable = false;
+    var optionsSelect = [];
+    
+    function AutoSelectOnFieldMatch() {
+        var fields = $("select[data-expected-field]");
+        fields.each(function (index, element) {
+            var expectedField = $(element).data("expected-field");
+            var $select = $(element);
+            var option = optionsSelect.find(x => x.header.toLowerCase() === expectedField.toLowerCase());
+            if (option) {
+                $select.val(option.header);
+                UpdatePreviewExcel($select, false);
+                $select.trigger('change.select2');
+                $select.trigger('select2:opening');
+            }
+        });
+    }
+    
+    function UpdatePreviewExcel(element, animateTable = true) {
+        var oldValue = $(element).attr('data-value');
+        if (oldValue) {
+            $('#modal-importar select option[value="' + oldValue + '"]').prop('disabled', false);
+            var $th = $('#preview-excel table thead tr th[data-v="' + oldValue + '"]');
+            $th.text(oldValue);
+            var index = $th.index();
+            $('#preview-excel tbody tr td:nth-child(' + (index + 1) + ')').removeClass('td-configurated')
+            $('#preview-excel colgroup col[data-v="' + oldValue + '"]').removeClass('col-configurated');
+            $('#preview-excel thead th[data-v="' + oldValue + '"]').removeClass('col-configurated');
+            var optionSelect = optionsSelect.find(x => x.header === oldValue);
+            if (optionSelect)
+                optionSelect.disabled = false;
+        }
+
+        var id = $(element).attr('id');
+        var value = $(element).val();
+        $(element).attr('data-value', value);
+        $('#preview-excel table thead tr th[data-v="' + value + '"]').text($(element).prev().text());
+        $('#modal-importar select:not(#' + id + ') option[value="' + value + '"]').prop('disabled', true);
+
+        var $th = $('#preview-excel thead th[data-v="' + value + '"]');
+        $('#preview-excel colgroup col[data-v="' + value + '"]').addClass('col-configurated');
+        $('#preview-excel thead th[data-v="' + value + '"]').addClass('col-configurated');
+        var index = $th.index();
+        $('#preview-excel tbody tr td:nth-child(' + (index + 1) + ')').addClass('td-configurated')
+
+        var optionSelect = optionsSelect.find(x => x.header === value);
+        if (optionSelect)
+            optionSelect.disabled = true;
+
+        if (animateTable && $('#preview-excel table thead tr th[data-v="' + value + '"]').offset()) {
+            $('.modal-preview-excel .simplebar-content-wrapper').animate({
+                scrollLeft: $('#preview-excel table thead tr th[data-v="' + value + '"]').offset().left
+            }, 2000);
+        }
+    }
+        
+    $(document).ready(function () {
+        $('#btn-importar-excel').click(function () {
+            $('#modal-importar').find('form').submit();
+        });
+
+        $('.importar-cliente').click(function () {
+            $('#file-choosen').click();
+        });
+        
+        $('.importar-csv').click(function () {
+            $('#file-choosen').click();
+        });
+
+        $("#itens-container").accordion({
+            active: false,
+            collapsible: true,
+            header: "div.item-accordion-title",
+            heightStyle: "content",
+            icons: { "header": "fa fa-angle-down", "activeHeader": "fa fa-angle-up" },
+            animate: 125
+        });
+
+        $("#previw-container").accordion({
+            active: false,
+            collapsible: true,
+            header: "div.item-accordion-title",
+            heightStyle: "content",
+            icons: { "header": "fa fa-angle-down", "activeHeader": "fa fa-angle-up" },
+            animate: 125
+        });
+
+        $('#file-choosen').change(function (oEvent) {
+            $('#preview-excel').html("");
+            if (!$('#modal-importar .modal-header').hasClass('hidden'))
+                $('#modal-importar .modal-header').addClass('hidden');
+
+            if (!$('#modal-importar .modal-footer').hasClass('hidden'))
+                $('#modal-importar .modal-footer').addClass('hidden');
+
+            if (!$('#form-importacao').hasClass('hidden'))
+                $('#form-importacao').addClass('hidden');
+
+            if (!$('.modal-preview-excel').hasClass('hidden'))
+                $('.modal-preview-excel').addClass('hidden');
+
+            var loading = $('#modal-loading').clone().css('display', 'block');
+            $('#modal-importar .modal-body').append(loading);
+
+            $('#modal-importar').modal('show');
+            $.ajax({
+                url: '@Model.URLForm',
+                method: 'GET',
+                success: function (resposta) {
+                    $('#form-importacao').html(resposta);
+                    excel.postMessage({ file: oEvent.target.files[0], msg: 'readExcel', size: 25 });
+                }
+            });
+        });
+
+        $('#modal-importar').on('hidden.bs.modal', function (e) {
+
+            //Atualizar a tela para modla voltar ao padrão
+            if (loadTable)
+                location.reload();
+            
+            $('#file-choosen').val("");
+            $('#form-importacao').html("");
+            $(document).off('keydown', ".select2-search__field");
+        });
+    });
+
+    function ajaxImportar(pos = 0) {
+        var dados = arrayOfArrays[pos].map(function (row) {
+            var item = {}
+
+            //Campos do Excel
+            for (var x = 0; x < $('#form-importacao select').length; x++) {
+                var id = $('#form-importacao select').eq(x).attr('id');
+
+                var value = row[$('#' + id).val()];
+                if (value){
+                    var excelValue = String(value).toLowerCase() == 'null' ? null : String(row[$('#' + id).val()]);
+                    if(excelValue == 'True' || excelValue == 'False')
+                        excelValue = excelValue.toLowerCase()
+                        
+                    item[id] = excelValue;
+                }
+                    
+            }
+
+            //Campos Padrãoes
+            for (var x = 0; x < $('#form-importacao input').length; x++) {
+                var id = $('#form-importacao input').eq(x).attr('id');
+                item[id] = $('#' + id).val()
+            }
+
+            //Campos Checkbox
+            for (var x = 0; x < $('#form-importacao input[type="checkbox"]').length; x++) {
+                var id = $('#form-importacao input[type="checkbox"]').eq(x).attr('id');
+                item[id] = $('#' + id).is(':checked');
+            }
+
+            return item;
+        });
+
+        $.ajax({
+            url: $('#modal-importar').find('form').attr('action'),
+            method: 'POST',
+            data: {dados},
+            success: function (resposta) {
+                currentProgress = currentProgress + ((100 * dados.length) / dadosArrayImporar.length);
+                progressBar.animate(currentProgress / 100);
+                progressBar.setText(parseInt(currentProgress) + "%");
+
+                if (resposta.erros.length > 0) {
+                    $('#table-ocorrencia .tr-default').remove();
+
+                    for (var x = 0; x < resposta.erros.length; x++) {
+                        var td = (resposta.erros[x].Codigo == null) ? resposta.erros[x].Descricao : resposta.erros[x].Codigo + " - " + resposta.erros[x].Descricao
+                        
+                        $('#table-ocorrencia').append(
+                            '<tr>' +
+                            '<td style="max-width: 310px" class="txt-ellipse" data-toggle="tooltip" title="' + td + '">' + td +  '</td>' +
+                            '<td colspan=2 style="max-width: 350px" class="txt-ellipse" data-toggle="tooltip" title="' + resposta.erros[x].Mensagem + '"><div>' + resposta.erros[x].Mensagem+'</div>' +
+                            '</td>' +
+                            '</tr>');
+                        qtdOcorrencia++;
+                    }
+                }
+                qtdSucesso = qtdSucesso + resposta.qtdSucesso;
+                qtdAtualizado = qtdAtualizado + resposta.qtdAtualizado;
+                $('#qtd-processado').text(qtdSucesso + qtdAtualizado + qtdOcorrencia);
+                $('#qtd-ocorrencia').text(qtdOcorrencia);
+                $('#qtd-importado').text(qtdSucesso);
+                $('#qtd-atualizado').text(qtdAtualizado);
+                if (arrayOfArrays.length == pos + 1) {
+                    $('.arrow-copy').hide();
+                    $('.check').css('display', 'inline-block');
+                    setTimeout(function () { $('.check').css('width', '19px'); }, 10);
+                    setTimeout(function () { $('.check').css('height', '40px'); }, 50);
+                    $('#btn-cancelar').removeClass('disabled');
+                    $('#btn-cancelar').val('Fechar');
+                    $('#title-status b').text('Importação Finalizada');
+                    $('#sub-status').text("Confira abaixo o resumo da importação de registros por excel/csv");
+                    $('#form-importacao').attr('data-submited', true);
+                    progressBar.animate(1);
+                    progressBar.setText("100%");
+                } else {
+                    pos++;
+                    ajaxImportar(pos);
+                }
+            },
+            error: function () {
+                $('#form-importacao').attr('data-submited', true);
+            }
+        });
+    }
+
+    function responseWebWorkerExcel(e) {
+        if (e && e.data) {
+            dadosArrayImporar = [];
+            arrayOfArrays = [];
+            progressBar = null;
+            currentProgress = 0;
+            qtdOcorrencia = 0;
+            qtdSucesso = 0;
+            loadTable = false;
+            optionsSelect = [];
+
+            var header = e.data.header.sort();
+            $('#modal-importar .chosen-select-noadd').html("");
+            var opt = new Option("", "", false, false);
+            $('#modal-importar .chosen-select-noadd').append(opt);
+            for (var x = 0; x < header.length; x++) {
+                var opt = new Option(header[x], header[x], false, false);
+                $('#modal-importar .chosen-select-noadd').append(opt);
+                optionsSelect.push({ header: header[x], disabled: false });
+            }
+            
+            dadosArrayImporar = e.data.dadasArray;
+            
+            $('#qtd-total').text(e.data.size);
+            $('#preview-excel').append('<table id="table-sheetjs" class="hidden"></table><table class="table"><colgroup></colgroup><tbody></tbody></table>');
+            $('#table-sheetjs')[0].innerHTML = e.data.tableHtml;
+            var total = $('#table-sheetjs tr').length;
+            total = (total > 25) ? 25 : total;
+            for (var x = 0; x < total; x++) {
+                $('#preview-excel tbody').append($('#table-sheetjs tr:nth-child(' + (x + 1) + ')').clone());
+                var tds = $('#preview-excel tbody tr:nth-child(' + (x + 1) + ') td');
+                var totalTds = tds.length;
+                for (var y = 0; y < totalTds; y++) {
+                    $(tds[y]).css('max-width', '60px');
+                    $(tds[y]).addClass('txt-ellipse');
+                    $(tds[y]).attr({
+                        'data-toggle': 'tooltip',
+                        'data-container': 'body',
+                        'title': $(tds[y]).text(),
+                    });
+                }
+            }
+
+            $('#table-sheetjs').remove();
+
+            var firstTr = $('#preview-excel').find('table tr').first();
+            $('#preview-excel').find('table').append('<thead><tr>' + firstTr.html() + '</tr></thead>')
+            firstTr.remove();
+            $colGroup = $('#preview-excel colgroup');
+            $('#preview-excel thead td').each(function () {
+                $(this).replaceWith('<th data-v="' + $(this).text() + '">' + $(this).text() + '</th>');
+                $colGroup.append('<col data-v="' + $(this).text() + '">')
+            });
+            $('#preview-excel tbody').append('<tr><td class="text-center" colspan="' + $('#preview-excel thead th').length + '"> . . . </td></tr>')
+
+            $('[data-toggle="tooltip"]').tooltip();
+
+            $('#modal-importar #modal-loading').remove();
+            $('#form-importacao').removeClass('hidden');
+            $('.modal-preview-excel').removeClass('hidden');
+            $('#modal-importar .modal-header').removeClass('hidden');
+            $('#modal-importar .modal-footer').removeClass('hidden');
+            
+            BuildEvents();
+        }
+    }
+
+    function BuildEvents() {
+        select2.initModalNoAddNoSelectOnClear('#modal-importar .chosen-select-noadd', "#modal-importar .modal-content", false, true, " ", "below");
+        $('#modal-importar .chosen-select-noadd').off('select2:closing');
+        $('#modal-importar .chosen-select-noadd').on('select2:closing', (e) => {
+            if ($(".select2-results__option--highlighted").length > 0) {
+                var idArray = $(".select2-results__option--highlighted")[0].id.split("-");
+                var value = idArray[idArray.length - 1];
+                $(e.target).attr('data-id', value);
+            } else {
+                $(e.target).removeAttr('data-id');
+            }
+        })
+        $(document).off('keydown', ".select2-search__field");
+        $(document).on('keydown', ".select2-search__field", (e) => {
+            if (e.key == 'Tab' && !e.shiftKey) {
+                var id = $(e.target).closest('.select2-dropdown').find('.select2-results__options').attr('id');
+                id = id.replace('select2-', '').replace('-results', '');
+                selectId = '#' + id;
+
+                $(selectId).val($(selectId).attr('data-id'));
+                $(selectId).trigger('change');
+
+                var $label = $('label[for="' + id + '"]').not('.has-error');
+
+                if (!$label.hasClass('label-animate')) {
+                    $label.addClass('label-animate');
+                }
+            }
+        });
+
+        $('#modal-importar').off("select2:unselecting");
+        $('#modal-importar').on("select2:unselecting", function (e) {
+            var value = $(e.target).attr('data-value');
+            $(this).removeAttr('data-value');
+            $('#modal-importar select option[value="' + value + '"]').prop('disabled', false);
+            $('#preview-excel table thead tr th[data-v="' + value + '"]').text(value);
+
+            var optionSelect = optionsSelect.find(x => x.header === value);
+            if (optionSelect)
+                optionSelect.disabled = false;
+        });
+
+        $('#modal-importar').off("select2:opening");
+        $('#modal-importar').on("select2:opening", function (e) {
+            var id = $(e.target).attr('id');
+            var $label = $('label[for="' + id + '"]').not('.has-error');
+
+            if (!$label.hasClass('label-animate'))
+                $label.addClass('label-animate');
+
+        });
+
+        $('#modal-importar').off("select2:close");
+        $('#modal-importar').on("select2:close", function (e) {
+            var id = $(e.target).attr('id');
+            if (!$(e.target).val()) {
+                var $label = $('label[for="' + id + '"]').not('.has-error');
+                $label.removeClass('label-animate');
+            }
+        });
+
+        $('#modal-importar select').change(function () {
+            UpdatePreviewExcel(this);
+            $(this).focusNextInputField();
+        });
+        
+        AutoSelectOnFieldMatch();
+        
+        var submited = false;
+        $('#modal-importar').find('form').submit(function (e) {
+            if (submited === false && $(this).valid()) {
+                loadTable = true;
+                submited = true;
+                arrayOfArrays = [];
+                var size = 25;
+                for (var i = 0; i < dadosArrayImporar.length; i += size) {
+                    arrayOfArrays.push(dadosArrayImporar.slice(i, i + size));
+                }
+
+                progressBar = new ProgressBar.Line("#progress-bar", {
+                    strokeWidth: 4,
+                    easing: "linear",
+                    duration: 125,
+                    color: "var(--main-color)",
+                    trailWidth: 5,
+                    svgStyle: { width: "100%", height: "100%", 'border-radius': "5px" },
+                    step: (state, bar) => {
+                        $('.progressbar-text').css('padding-bottom', '6px');
+                        if (bar.value() > 0.5) {
+                            $('.progressbar-text').css('color', '#FFF')
+                        }
+                    }
+                });
+                qtdOcorrencia = 0;
+                qtdSucesso = 0;
+                $('#modal-importar .modal-content').css('max-width', '620px');
+                $('#progress-content').removeClass('hidden');
+                $('.modal-preview-excel').addClass('hidden');
+                $('#form-importacao').addClass('hidden');
+                $('#btn-cancelar').addClass('disabled');
+                $('#btn-importar-excel').hide();
+                ajaxImportar();
+            }
+            e.preventDefault();
+        });
+    }
+</script>

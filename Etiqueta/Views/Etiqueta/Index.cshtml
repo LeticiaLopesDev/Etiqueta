@@ -1,8 +1,50 @@
-﻿@{
-    ViewBag.Title = "Etiquetas";
+﻿@using GestorDCSystem.ViewModel
+@using Microsoft.AspNetCore.Mvc.TagHelpers
+@{
+    ViewBag.Title = "Etiqueta Funcionário";
     Layout = "_Layout";
 }
 
-<h2>Etiquetas</h2>
+<h2>Etiqueta Funcionário</h2>
 
-<a class="btn btn-primary" href="@Url.Action("EtiquetaFuncionario")">Etiqueta Funcionário</a>
+@* @using (Html.BeginForm("ImprimirEtiquetaFuncionario", "Etiqueta", FormMethod.Post, new { @class = "form", id = "form-etiqueta-funcionario", enctype = "multipart/form-data" }))
+{
+    <div class="mb-3">
+        <label for="formFile" class="form-label">Default file input example</label>
+        <input class="form-control" type="file" id="formFile">
+    </div>
+    <button type="submit">Importar e Imprimir</button>
+} *@
+
+<form asp-action="EtiquetaFuncionario" asp-controller="Etiqueta"
+      enctype="multipart/form-data" onsubmit="AJAXSubmit(this);return false;"
+      method="post">
+    <dl>
+        <dt>
+            <label for="formFile">File</label>
+        </dt>
+        <dd>
+            <div class="mb-3">
+                <label for="formFile" class="form-label">Default file input example</label>
+                <input class="form-control" type="file" name="formFile" id="formFile">
+            </div>
+        </dd>
+    </dl>
+
+    <input class="btn btn-primary" type="submit" value="Importar e Imprimir" />
+
+    <div style="margin-top:15px">
+        <output name="result"></output>
+    </div>
+</form>
+
+@await Html.PartialAsync("~/Views/Shared/_ModalImportarExcel.cshtml", new Importacao()
+{
+    URLForm = Url.Action("Importacao", "Etiqueta"),
+    Titulo = "Importação de Cadastro de Item por Arquivo CSV / Excel"
+})
+
+<script>
+</script>
+
+

@@ -1,7 +1,9 @@
-﻿using CsvHelper;
+﻿using System.ComponentModel.DataAnnotations;
+using CsvHelper;
 using Etiqueta.ViewModel;
 using Microsoft.AspNetCore.Mvc;
 using System.Globalization;
+using GestorDCSystem.ViewModel;
 
 namespace Etiqueta.Controllers;
 public class EtiquetaController : Controller
@@ -17,12 +19,78 @@ public class EtiquetaController : Controller
     {
         return View();
     }
+    
+    /// <summary>
+    /// Retorna a view de importação de itens para a vinculação das colunas do arquivo excel
+    /// </summary>
+    public ActionResult Importacao()
+    {
+        return PartialView("_Importacao", new EtiquetaFuncionario());
+    }
+    
+    /// <summary>
+    /// Converte a lista de itens para a interface <see cref="IItemImportacao"/> e chama o método para importar os itens
+    /// </summary>
+    /// <param name="itens">Lista de <see cref="ItemImportacao">itens</see> que serão importados</param>
+    [HttpPost]
+    public async Task<ActionResult> BuildImportacaoExcel(List<EtiquetaFuncionario> itens)
+    {
+        var model = itens.Select(i => (IEtiqueta)i).ToList();
+        return await ImportarExcelCsv(model);
+    }
+    
+    /// <summary>
+    /// Faz a importação dos itens a partir de um arquivo excel ou csv,
+    /// atualiza o item caso já exista ou cria um novo caso não exista
+    /// </summary>
+    /// <param name="itens">Lista de <see cref="IItemImportacao">itens</see> que serão importados</param>
+    [HttpPost]
+    public async Task<ActionResult> ImportarExcelCsv(List<IEtiqueta> itens)
+    {
+        var erros         = new List<ImportacaoCSVErro>();
+        var qtdSucesso    = 0;
+        var qtdAtualizado = 0;
 
-    [HttpGet]
+        var listFuncionarios = new List<ViewModel.EtiquetaFuncionario>();
+
+        foreach (var item in itens)
+        {
+            try
+            {
+                var error   = new List<string>();
+                var ctx     = new ValidationContext(item);
+                var results = new List<ValidationResult>();
+                
+                if (!Validator.TryValidateObject(item, ctx, results, true))
+                {
+                    foreach (var errors in results)
+                        error.Add(errors.ToString());
+
+                    throw new Exception(string.Join("<br>", error.ToArray()));
+                }
+
+                var itemImportacao = (EtiquetaFuncionario) item;
+                listFuncionarios.Add(itemImportacao);
+                
+            }
+            catch (Exception ex)
+            {
+                erros.Add(new ImportacaoCSVErro
+                {
+                    Codigo = item.Codigo,
+                    Descricao = item.Nome,
+                    Mensagem = ex.Message
+                });
+            }
+        }
+        return Json(new { erros = erros, qtdSucesso });
+    }
+
+    /*[HttpGet]
     public ActionResult EtiquetaFuncionario()
     {
         return View(new EtiquetaFuncionario());
-    }
+    }*/
 
     [HttpPost]
     public ActionResult EtiquetaFuncionario(IFormFile formFile)

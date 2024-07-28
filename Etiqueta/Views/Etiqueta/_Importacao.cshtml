@@ -1,0 +1,110 @@
+﻿@model Etiqueta.ViewModel.EtiquetaFuncionario
+@{
+    var area = ViewContext.RouteData.Values["area"]?.ToString();
+}
+
+@using (Html.BeginForm("BuildImportacaoExcel", "Etiqueta", new {Area = area}, FormMethod.Post, false, new { @class = "dsh-form", id="form-excel", enctype = "multipart/form-data" }))
+{
+    <div class="row" style="max-height: 248px" data-simplebar data-simplebar-auto-hide="false">
+        <div class="col-md-12">
+            <h5 class="text-center mg-b-15">Vincule abaixo as colunas da sua planilha excel com os campos cadastrais para fazer a importação</h5>
+            <hr/>
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        @Html.LabelFor(m => m.CnpjEmpresa, new { @class = "placeholder control-label" })
+                        @Html.DropDownListFor(m => m.CnpjEmpresa, new List<SelectListItem>(), "", new { @class = "form-control chosen-select-noadd", data_expected_field = "cnpj_cpf"})
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        @Html.LabelFor(m => m.NomeEmpresa, new { @class = "placeholder control-label" })
+                        @Html.DropDownListFor(m => m.NomeEmpresa, new List<SelectListItem>(), "", new { @class = "form-control chosen-select-noadd", data_expected_field = "razao_social_nome" })
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        @Html.LabelFor(m => m.Codigo, new { @class = "placeholder control-label" })
+                        @Html.DropDownListFor(m => m.Codigo, new List<SelectListItem>(), "", new { @class = "form-control chosen-select-noadd", data_expected_field = "codigo" })
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        @Html.LabelFor(m => m.Nome, new { @class = "placeholder control-label" })
+                        @Html.DropDownListFor(m => m.Nome, new List<SelectListItem>(), "", new { @class = "form-control chosen-select-noadd", data_expected_field = "nome" })
+                    </div>
+                </div>
+               
+           
+                <div class="col-md-6">
+                    <div class="form-group">
+                        @Html.LabelFor(m => m.CTPS, new { @class = "placeholder control-label" })
+                        @Html.DropDownListFor(m => m.CTPS, new List<SelectListItem>(), "", new { @class = "form-control chosen-select-noadd", data_expected_field = "ctps" })
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        @Html.LabelFor(m => m.CodigoFuncao, new { @class = "placeholder control-label" })
+                        @Html.DropDownListFor(m => m.CodigoFuncao, new List<SelectListItem>(), "", new { @class = "form-control chosen-select-noadd", data_expected_field = "funcao_codigo" })
+                    </div>
+                </div>
+          
+                <div class="col-md-6">
+                    <div class="form-group">
+                        @Html.LabelFor(m => m.NomeFuncao, new { @class = "placeholder control-label" })
+                        @Html.DropDownListFor(m => m.NomeFuncao, new List<SelectListItem>(), "", new { @class = "form-control chosen-select-noadd", data_expected_field = "funcao_nome" })
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        @Html.LabelFor(m => m.Horario, new { @class = "placeholder control-label" })
+                        @Html.DropDownListFor(m => m.Horario, new List<SelectListItem>(), "", new { @class = "form-control chosen-select-noadd", data_expected_field = "horario" })
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+<script>
+    $(document).ready(function () {
+        $.validator.messages.required = "Campo obrigatório";
+            $("#form-excel").validate({
+                ignore: "",
+                errorClass: 'has-error',
+                rules: {
+                    Descricao: {
+                        required: true,
+                    },
+                    Ncm: {
+                        required: true,
+                    },
+                    Codigo: {
+                        required: true,
+                    },
+                    Nome: {
+                        required: true,
+                    },
+                    CTPS: {
+                        required: true,
+                    },
+                    CodigoFuncao: {
+                        required: true,
+                    },
+                    NomeFuncao: {
+                        required: true,
+                    },
+                    Horario: {
+                        required: true,
+                    },
+                }
+            });
+    });
+</script>
