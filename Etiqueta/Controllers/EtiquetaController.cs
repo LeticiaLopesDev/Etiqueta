@@ -52,7 +52,7 @@ public class EtiquetaController : Controller
         model.Width = 215.9m;
         model.ListModel = funcionarios.ToList().Select(x=>(IEtiqueta)x).ToList();
         model.PartialName = "_Funcionario";
-        ViewBag.Periodo = "09/2024";
+        ViewBag.Periodo = "04/2025";
 
         return View("Impressao", model);
     }
