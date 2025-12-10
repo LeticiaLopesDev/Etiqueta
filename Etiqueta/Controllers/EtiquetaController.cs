@@ -68,7 +68,7 @@ public class EtiquetaController : Controller
       
         model.ListModel = funcionarios.ToList().Select(x=>(IEtiqueta)x).ToList();
         model.PartialName = "_Funcionario";
-        ViewBag.Periodo = "10/2025";
+        ViewBag.Periodo = "01/2026";
 
         return View("Impressao", model);
     }
