@@ -39,20 +39,20 @@ public class EtiquetaController : Controller
         var model = new Config();
         model.Columns = 3;
         //CARTA
-        /*model.MarginTop = 12.7m;
+        model.MarginTop = 12.7m;
         model.MarginLeft = 4.8m;
         model.MarginRight = 4.8m;
-        model.MarginBottom = 12.7m;*/
-        /*model.Tag = new Tag()
+        model.MarginBottom = 12.7m;
+        model.Tag = new Tag()
         {
            Width = 66.7m,
            Height = 25.4m,
            MarginLeft = 3.2m
-        };*/
-        /* model.Height = 279.4m;
-        model.Width = 215.9m;*/
+        };
+        model.Height = 279.4m;
+        model.Width = 215.9m;
 
-        model.MarginTop = 10m;
+        /*model.MarginTop = 10m;
         model.MarginLeft = 7m;
         model.MarginRight = 7m;
         model.MarginBottom = 7m;
@@ -64,11 +64,11 @@ public class EtiquetaController : Controller
             MarginLeft = 2.5m
         };
         model.Height = 297m;
-        model.Width = 210m;
+        model.Width = 210m;*/
       
         model.ListModel = funcionarios.ToList().Select(x=>(IEtiqueta)x).ToList();
         model.PartialName = "_Funcionario";
-        ViewBag.Periodo = "01/2026";
+        ViewBag.Periodo = "08/2026";
 
         return View("Impressao", model);
     }
